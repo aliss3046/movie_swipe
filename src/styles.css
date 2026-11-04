@@ -1,0 +1,196 @@
+*{
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #210f17;
+    color: #fff0f5;
+}
+
+.header {
+    padding: 32px 20px;
+    text-align: center;
+}
+
+.header p {
+    color: #d5afbf;
+}
+
+.main {
+    padding: 0 20px 40px;
+}
+
+.movie-card {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: #3a1b2a;
+    border: 1px solid #704052;
+    border-radius: 20px;
+    position: relative;
+}
+
+.movie-card p {
+    line-height: 1.6;
+    position: relative;
+}
+
+.movie-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 10px;
+    background-color: #f2a7c2;
+    color: #210f17;
+    font: inherit;
+    cursor: pointer
+}
+
+.swipe-card {
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+  transition: transform 0.2s ease;
+}
+
+.swipe-card.is-dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+.swipe-card:focus-visible {
+  outline: 2px solid #f2a7c2;
+  outline-offset: 5px;
+}
+
+.swipe-hint {
+  margin-top: 24px;
+  color: #d5afbf;
+  font-size: 14px;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card {
+    transition: none;
+  }
+}
+
+button:hover {
+    background-color: #ffc5da;
+}
+
+button:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: 4px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  background-color: #f2a7c2;
+}
+
+.movie-list {
+  min-width: 0;
+  margin: 0;
+  padding: 24px;
+
+  background-color: #3a1b2a;
+  border: 1px solid #704052;
+  border-radius: 20px;
+  overflow-wrap: anywhere;
+}
+
+.movie-list h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+.movie-list p {
+  color: #d5afbf;
+}
+
+.movie-list ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.movie-list li {
+  padding: 8px 0;
+  line-height: 1.5;
+}
+
+.movie-lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+
+  max-width: 1000px;
+  margin: 24px auto 0;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.movie-poster {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  margin: 16px auto;
+  border-radius: 12px;
+}
+
+.card-menu {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.card-menu-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.card-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  padding: 8px;
+  background-color: #3a1b2a;
+  border: 1px solid #704052;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.card-menu-dropdown button {
+  width: 100%;
+  text-align: left;
+}
+
+@media (max-width: 500px) {
+  .movie-lists {
+    grid-template-columns: 1fr;
+  }
+}
