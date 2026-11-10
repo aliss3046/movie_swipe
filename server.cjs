@@ -1,9 +1,10 @@
 require("dotenv").config();
 
 const express = require("express");
+const path = require("path");
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const apiKey = process.env.KINOPOISK_TOKEN;
 
 if (!apiKey) {
@@ -153,6 +154,18 @@ app.get('/api/movies/:id', async (req, res) => {
     }
 });
 
-app.listen(PORT, "127.0.0.1", () => {
-  console.log(`Сервер запущен: http://127.0.0.1:${PORT}`);
+app.use(express.static(path.join(__dirname, "dist")));
+
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    message: "API-маршрут не найден",
+  });
+});
+
+app.get("/{*splat}", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Сервер запущен на порту ${PORT}`);
 });

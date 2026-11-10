@@ -22,7 +22,7 @@ module.exports = {
                     options: {
                         presets: [
                             "@babel/preset-env",
-                            ["@babel/preset-react", {runtime: "automatic"}],
+                            ["@babel/preset-react", {runtime: "automatic", development: false,}],
                         ],
                     },
                 },
@@ -47,13 +47,15 @@ module.exports = {
 
         proxy: [
             {
-                content: ['/api'],
+                context: ['/api'],
                 target: 'http://127.0.0.1:3001',
             },
         ],
 
         port: 3000,
         open: true,
+        host: "0.0.0.0",
+        allowedHosts: ["legal-dryers-fall.loca.lt"],
     },
 };
 
