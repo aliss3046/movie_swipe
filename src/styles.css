@@ -14,6 +14,12 @@ body {
     text-align: center;
 }
 
+.clear-list-button {
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
 .header p {
     color: #d5afbf;
 }
@@ -42,6 +48,12 @@ body {
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 24px;
+}
+
+.undo-actions {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
 }
 
 button {

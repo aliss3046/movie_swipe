@@ -15,6 +15,7 @@ export default function App(){
     const [loadMoreError, setLoadMoreError] = useState("");
     const [hasMore, setHasMore] = useState(true);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [swipeHistory, setSwipeHistory] = useState([]);
     const [savedMovies, setSavedMovies] = useState(() => {
         try {
             const saved = localStorage.getItem("movie-swipe-saved-movies");
@@ -194,10 +195,20 @@ export default function App(){
             return;
         }
 
+        setSwipeHistory((previousHistory) => [
+            ...previousHistory,
+            {
+                movieId: movie.id,
+                index: currentIndex,
+                previousStatus: movieStatuses[movie.id],
+            },
+        ]);
+
         setSavedMovies((previousMovies) => ({
             ...previousMovies,
             [movie.id]: movie,
         }));
+
         setMovieStatuses((previousStatuses) => ({
             ...previousStatuses,
             [movie.id]: status,
@@ -215,6 +226,57 @@ export default function App(){
     function handleRestart() {
         setCurrentIndex(0);
         setIsMenuOpen(false);
+        setSwipeHistory([]);;
+    }
+
+    function handleClearList(status) {
+        const listName =
+            status === "want" ? "Хочу посмотреть" : "Уже просмотрено";
+
+        const confirmed = window.confirm(
+            `Очистить список «${listName}»? Все фильмы будут удалены из этого списка.`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setMovieStatuses((previousStatuses) =>
+            Object.fromEntries(
+                Object.entries(previousStatuses).filter(
+                    ([id, movieStatus]) => movieStatus !== status
+                )
+            )
+        );
+
+        setSwipeHistory([]);
+    }
+
+    function handleUndo() {
+        const lastAction = swipeHistory[swipeHistory.length - 1];
+
+        if (!lastAction) {
+            return;
+        }
+
+        setMovieStatuses((previousStatuses) => {
+            const updatedStatuses = { ...previousStatuses };
+
+            if (lastAction.previousStatus === undefined) {
+                delete updatedStatuses[lastAction.movieId];
+            } else {
+                updatedStatuses[lastAction.movieId] =
+                    lastAction.previousStatus;
+            }
+
+            return updatedStatuses;
+        });
+
+        setCurrentIndex(lastAction.index);
+
+        setSwipeHistory((previousHistory) =>
+            previousHistory.slice(0, -1)
+        );
     }
 
     async function handleLoadMore() {
@@ -282,6 +344,7 @@ export default function App(){
         }));
 
         setIsMenuOpen(false);
+        setSwipeHistory([]);;
     }
 
     function handlePointerDown(event) {
@@ -289,7 +352,7 @@ export default function App(){
             return;
         }
 
-        if (event.target.closest("button, a, input, select, textarea")) { //event.target - Элемент, на котором возникло событие, Метод closest(...) ищет подходящий элемент сначала среди самого элемента, затем среди его родителей.
+        if (event.target.closest("button, a, input, select, textarea, summary")) { //event.target - Элемент, на котором возникло событие, Метод closest(...) ищет подходящий элемент сначала среди самого элемента, затем среди его родителей.
             return;
         }
 
@@ -384,9 +447,9 @@ export default function App(){
 
     if (error) {
         return (
-        <main className="main">
-            <p role="alert">{error}</p>
-        </main>
+            <main className="main">
+                <p role="alert">{error}</p>
+            </main>
         );
     }
 
@@ -413,19 +476,19 @@ export default function App(){
                     aria-label="Карточка фильма. Стрелка вправо — хочу посмотреть, влево — уже просмотрено."
                     onKeyDown={(event) => {
                         if (event.target !== event.currentTarget || event.repeat) {
-                        return;
+                            return;
                         }
 
                         if (event.key === "ArrowLeft") {
-                        event.preventDefault();
-                        resetSwipe();
-                        handleChoose("watched");
+                            event.preventDefault();
+                            resetSwipe();
+                            handleChoose("watched");
                         }
 
                         if (event.key === "ArrowRight") {
-                        event.preventDefault();
-                        resetSwipe();
-                        handleChoose("want");
+                            event.preventDefault();
+                            resetSwipe();
+                            handleChoose("want");
                         }
                     }}
                     >
@@ -467,13 +530,19 @@ export default function App(){
                     </details>
                     <div className = 'movie-actions'>
                         <button type="button" onClick={handleSkip}>Пропустить</button>
-                        <button type="button" onClick={() => handleChoose("want")}>Хочу посмотреть</button>
-                        <button type="button" onClick={() => handleChoose("watched")}>Уже просмотрено</button>
+                        <button type="button" onClick={handleUndo} disabled={swipeHistory.length === 0}>↶ Отменить свайп</button>
                     </div>
                 </article>
             ) : (
                 <section className="movie-card">
                     <h2>Фильмы просмотрены</h2>
+                    <button
+                        type="button"
+                        onClick={handleUndo}
+                        disabled={swipeHistory.length === 0}
+                    >
+                        ↶ Отменить свайп
+                    </button>
                     <p>
                         {movies.length === 0
                             ? "В подборке пока нет фильмов."
@@ -501,9 +570,17 @@ export default function App(){
                     <button type="button" onClick={handleRestart}>Начать заново</button>
                 </section>
                 )}
+
             <div className = 'movie-lists'>
                 <section className = 'movie-list'>
                     <h2> Хочу посмотреть: {wantedMovies.length}</h2>
+
+                    <button
+                        type="button"
+                        className="clear-list-button"
+                        onClick={() => handleClearList("want")}
+                        disabled={wantedMovies.length === 0}
+                    >Очистить список</button>
 
                     {wantedMovies.length === 0 ? (
                         <p>Пока здесь нет фильмов</p>
@@ -520,6 +597,13 @@ export default function App(){
 
                 <section className = "movie-list">
                     <h2>Уже просмотрено: {watchedMovies.length}</h2>
+
+                    <button
+                        type="button"
+                        className="clear-list-button"
+                        onClick={() => handleClearList("watched")}
+                        disabled={watchedMovies.length === 0}
+                    >Очистить список</button>
 
                     {watchedMovies.length === 0 ? (
                         <p>Пока здесь нет фильмов</p>
