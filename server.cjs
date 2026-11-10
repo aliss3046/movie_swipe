@@ -154,6 +154,7 @@ app.get('/api/movies/:id', async (req, res) => {
     }
 });
 
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "dist")));
 
 app.use("/api", (req, res) => {
