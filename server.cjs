@@ -18,9 +18,9 @@ const catalogCache = new Map();
 app.get("/api/movies", async (req, res) => {
   const page = Number(req.query.page ?? 1);
 
-  if (!Number.isInteger(page) || page < 1 || page > 5) {
+  if (!Number.isInteger(page) || page < 1 || page > 20) {
     return res.status(400).json({
-      message: "Номер страницы должен быть от 1 до 5",
+      message: "Номер страницы должен быть от 1 до 20",
     });
   }
 
@@ -80,12 +80,18 @@ app.get("/api/movies", async (req, res) => {
       rating: item.ratingKinopoisk ?? null,
     }));
 
+    const result = {
+      items: movies, 
+      totalPages: Math.min(data.totalPages, 20),
+    }
+
     catalogCache.set(page, {
-        data: movies,
+        data: result,
         expiresAt : Date.now() + 10 * 60 * 1000,
     });
 
-    res.json(movies);
+    res.json(result);
+    
   } catch (err) {
     console.error("Ошибка загрузки фильмов:", err.message);
     console.error("Причина:", err.cause);
@@ -112,7 +118,7 @@ app.get('/api/movies/:id', async (req, res) => {
     const cached = detailsCache.get(id);
 
     if (cached&&Date.now() < cacheExpiresAt) {
-        return res.json(cached);
+        return res.json(cached.data);
     }
 
     try {
@@ -121,7 +127,7 @@ app.get('/api/movies/:id', async (req, res) => {
             {
                 headers: {
                     'X-API-KEY': apiKey,
-                    Acccept: 'application/json',
+                    Accept: 'application/json',
                 },
                 signal: AbortSignal.timeout(15000),
             }

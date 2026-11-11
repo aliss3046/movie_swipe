@@ -1,5 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 
+function shufflePages(pages) {
+    const shuffled = [...pages];
+    for (let i = shuffled.length - 1;i > 0 ;i--){
+        const randomIndex = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]];
+    }
+
+    return shuffled;
+}
+
 export default function App(){
     const [dragX, setDragX] = useState(0);// хранит смещение карточки по горизонтали
     const [isDragging, setIsDragging] = useState(false);
@@ -16,6 +26,7 @@ export default function App(){
     const [hasMore, setHasMore] = useState(true);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [swipeHistory, setSwipeHistory] = useState([]);
+    const [remainingPages, setRemainingPages] = useState([]);
     const [savedMovies, setSavedMovies] = useState(() => {
         try {
             const saved = localStorage.getItem("movie-swipe-saved-movies");
@@ -110,11 +121,43 @@ export default function App(){
 
                 const data = await response.json();
 
-                if (!Array.isArray(data)) {
-                    throw new Error("Ожидался массив фильмов");
+                if (!Array.isArray(data?.items) || !Number.isInteger(data.totalPages)) {
+                    throw new Error("Сервер вернул каталог в неожиданном формате");
                 }
 
-                setMovies(data);
+                const pages = Array.from(
+                    { length: data.totalPages },
+                    (_, index) => index + 1
+                );
+
+                const [firstPage, ...restPages] = shufflePages(pages);
+
+                let items = [];
+
+                if (firstPage === 1) {
+                    items = data.items;
+                } else if (firstPage !== undefined) {
+                    const firstPageResponse = await fetch(
+                        `/api/movies?page=${firstPage}`,
+                        { signal: controller.signal }
+                    );
+
+                if (!firstPageResponse.ok) {
+                    throw new Error("Не удалось загрузить первую подборку");
+                }
+
+                const firstPageData = await firstPageResponse.json();
+
+                if (!Array.isArray(firstPageData?.items)) {
+                    throw new Error("Сервер вернул каталог в неожиданном формате");
+                }
+
+                    items = firstPageData.items;
+                }
+
+                setMovies(items);
+                setRemainingPages(restPages);
+                setHasMore(restPages.length > 0);
             } catch (err){
                 if (err.name !=="AbortError"){
                     setError("Не удалось загрузить фильм. Необходимо обновить страницу");
@@ -136,7 +179,9 @@ export default function App(){
         (item) => movieStatuses[item.id] !== "disliked"
     );
 
-    const movie =suggestedMovies[currentIndex];
+    const movie = suggestedMovies[currentIndex];
+    const previousMovie = suggestedMovies[currentIndex - 1];
+    const nextMovie = suggestedMovies[currentIndex + 1];
     const movieId = movie?.id;
 
     useEffect(() => {
@@ -283,12 +328,16 @@ export default function App(){
         if (isLoadingMore || !hasMore) {
             return;
         }
+        const [nextPage, ...restPages] = remainingPages;
+
+        if (nextPage === undefined) {
+            return;
+        }
 
         setIsLoadingMore(true);
         setLoadMoreError("");
 
         try {
-            const nextPage = page + 1;
 
             const response = await fetch(`/api/movies?page=${nextPage}`);
 
@@ -298,8 +347,8 @@ export default function App(){
 
             const data = await response.json();
 
-            if (!Array.isArray(data)) {
-            throw new Error("Ожидался массив фильмов");
+            if (!Array.isArray(data?.items) || !Number.isInteger(data.totalPages)) {
+                throw new Error("Ожидался массив фильмов");
             }
 
             setMovies((previousMovies) => {
@@ -307,20 +356,20 @@ export default function App(){
                 previousMovies.map((item) => item.id)
             );
 
-            const newMovies = data.filter((item) => {
+            const newMovies = data.items.filter((item) => {
                 if (knownIds.has(item.id)) {
-                return false;
+                    return false;
                 }
 
                 knownIds.add(item.id);
-                return true;
+                    return true;
             });
 
             return [...previousMovies, ...newMovies];
             });
 
-            setPage(nextPage);
-            setHasMore(data.length > 0 && nextPage < 5);
+            setRemainingPages(restPages);
+            setHasMore(restPages.length > 0);
         } catch (err) {
             setLoadMoreError("Не удалось загрузить следующую страницу.");
         } finally {
@@ -462,77 +511,105 @@ export default function App(){
 
         <main className = 'main'>
             {movie ? (
-                <article
-                    className={`movie-card swipe-card ${isDragging ? "is-dragging" : ""}`}
-                    style={{
-                        transform: `translateX(${dragX}px) rotate(${dragX / 25}deg)`,
-                    }}
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onPointerCancel={handlePointerCancel}
-                    onLostPointerCapture={handlePointerCancel}
-                    tabIndex={0}
-                    aria-label="Карточка фильма. Стрелка вправо — хочу посмотреть, влево — уже просмотрено."
-                    onKeyDown={(event) => {
-                        if (event.target !== event.currentTarget || event.repeat) {
-                            return;
-                        }
-
-                        if (event.key === "ArrowLeft") {
-                            event.preventDefault();
-                            resetSwipe();
-                            handleChoose("watched");
-                        }
-
-                        if (event.key === "ArrowRight") {
-                            event.preventDefault();
-                            resetSwipe();
-                            handleChoose("want");
-                        }
-                    }}
-                    >
-                    <div className="card-menu">
-                        <button
-                            type="button"
-                            className="card-menu-toggle"
-                            aria-label="Действия с фильмом"
-                            aria-expanded={isMenuOpen}
-                            onClick={() => setIsMenuOpen((previous) => !previous)}
-                        >
-                            ⋯
-                        </button>
-
-                        {isMenuOpen && (
-                            <div className="card-menu-dropdown">
-                            <button type="button" onClick={handleDislike}>
-                                Не нравится
-                            </button>
-                            </div>
-                        )}
-                        </div>
-                    <p>Фильм {currentIndex + 1} из {suggestedMovies.length}</p>
-
-                    {movie.poster && (
-                        <img className = 'movie-poster'
-                        draggable={false}
-                        src = {movie.poster}
-                        alt = {`Постер фильма "${movie.title}"`} />
+                <div className="movie-stage">
+                    {previousMovie?.poster && (
+                        <img
+                            className="movie-preview movie-preview--left"
+                            src={previousMovie.poster}
+                            alt=""
+                            draggable={false}
+                        />
                     )}
-                    <h2>{movie.title}</h2>
-                    <p>Рейтинг Кинопоиска: {movie.rating ?? "Нет оценки"}</p>
-                    <p>{movie.year} * {movie.genre}</p>
-                    <details>
-                        <summary>Описание:</summary>
-                        <p>
-                            {isDescriptionLoading ? 'Загружаем описание...' : movieDescription}   
-                        </p>
-                    </details>
-                    <div className = 'movie-actions'>
-                        <button type="button" onClick={handleSkip}>Пропустить</button>
-                        <button type="button" onClick={handleUndo} disabled={swipeHistory.length === 0}>↶ Отменить свайп</button>
-                    </div>
-                </article>
+
+                    {nextMovie?.poster && (
+                        <img
+                            className="movie-preview movie-preview--right"
+                            src={nextMovie.poster}
+                            alt=""
+                            draggable={false}
+                        />
+                    )}
+                    <article
+                        className={`movie-card swipe-card ${isDragging ? "is-dragging" : ""}`}
+                        style={{
+                            transform: `translateX(${dragX}px) rotate(${dragX / 25}deg)`,
+                        }}
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerCancel={handlePointerCancel}
+                        onLostPointerCapture={handlePointerCancel}
+                        tabIndex={0}
+                        aria-label="Карточка фильма. Стрелка вправо — хочу посмотреть, влево — уже просмотрено."
+                        onKeyDown={(event) => {
+                            if (event.target !== event.currentTarget || event.repeat) {
+                                return;
+                            }
+
+                            if (event.key === "ArrowLeft") {
+                                event.preventDefault();
+                                resetSwipe();
+                                handleChoose("watched");
+                            }
+
+                            if (event.key === "ArrowRight") {
+                                event.preventDefault();
+                                resetSwipe();
+                                handleChoose("want");
+                            }
+                        }}
+                        >
+                        <div className="card-menu">
+                            <button
+                                type="button"
+                                className="card-menu-toggle"
+                                aria-label="Действия с фильмом"
+                                aria-expanded={isMenuOpen}
+                                onClick={() => setIsMenuOpen((previous) => !previous)}
+                            >
+                                ⋯
+                            </button>
+
+                            {isMenuOpen && (
+                                <div className="card-menu-dropdown">
+                                <button type="button" onClick={handleDislike}>
+                                    Не нравится
+                                </button>
+                                </div>
+                            )}
+                            </div>
+
+                            <div className="swipe-hints">
+                                <span className="swipe-hint">
+                                    <span aria-hidden="true">←</span>
+                                </span>
+                                <span className="swipe-hint">
+                                    <span aria-hidden="true">→</span>
+                                </span>
+                            </div>
+                        <p>Фильм {currentIndex + 1} из {suggestedMovies.length}</p>
+
+                        {movie.poster && (
+                            <img className = 'movie-poster'
+                            draggable={false}
+                            src = {movie.poster}
+                            alt = {`Постер фильма "${movie.title}"`} />
+                        )}
+                        <h2>{movie.title}</h2>
+                        <p>Рейтинг Кинопоиска: {movie.rating ?? "Нет оценки"}</p>
+                        <p>{movie.year} * {movie.genre}</p>
+                        <details>
+                            <summary>Описание:</summary>
+                            <p>
+                                {isDescriptionLoading ? 'Загружаем описание...' : movieDescription}   
+                            </p>
+                        </details>
+                        <div className = 'movie-actions'>
+                            <button type="button" onClick={handleSkip}>Пропустить</button>
+                            <button type="button" onClick={handleUndo} disabled={swipeHistory.length === 0}>↶ Отменить свайп</button>
+                        </div>
+                    </article>
+                </div>
             ) : (
                 <section className="movie-card">
                     <h2>Фильмы просмотрены</h2>

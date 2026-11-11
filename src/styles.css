@@ -5,7 +5,7 @@
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #210f17;
+    background-color: #10090d;
     color: #fff0f5;
 }
 
@@ -18,6 +18,86 @@ body {
   margin-bottom: 16px;
   padding: 8px 12px;
   font-size: 14px;
+}
+
+.movie-stage {
+    position: relative;
+    isolation: isolate;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.movie-stage::before {
+    content: "";
+    position: absolute;
+    z-index: -2;
+    inset: 3% 0;
+    background: radial-gradient(
+        ellipse at 50% 46%,
+        #f0445570 0%,
+        #a2193e50 35%,
+        transparent 72%
+    );
+    pointer-events: none;
+}
+
+.movie-preview {
+    position: absolute;
+    z-index: -1;
+    top: 48%;
+    width: 22%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border: 1px solid #ff859d4d;
+    border-radius: 16px;
+    box-shadow: 0 12px 32px #0009;
+    filter: brightness(0.62) saturate(0.85);
+    pointer-events: none;
+}
+
+.movie-preview--left {
+    left: 3%;
+    transform: translateY(-50%) rotate(-6deg);
+}
+
+.movie-preview--right {
+    right: 3%;
+    transform: translateY(-50%) rotate(6deg);
+}
+
+.movie-stage .swipe-card {
+    max-width: 320px;
+    padding: 12px;
+    border-radius: 16px;
+    background:
+        radial-gradient(ellipse at top, #d23b6338, transparent 60%),
+        linear-gradient(160deg, #311721, #1a1016);
+    border-color: #f590ab65;
+    box-shadow:
+        inset 0 1px 0 #ffd5df44,
+        0 20px 50px #000a,
+        0 0 36px #e13e593b;
+}
+
+.movie-stage .movie-poster {
+  width: auto;
+  max-width: 100%;
+  max-height: 235px;
+  box-shadow: 0 10px 28px #0009;
+}
+
+.swipe-hints {
+    margin-top: 36px;
+}
+
+@media (max-width: 600px) {
+    .movie-preview {
+        display: none;
+    }
+
+    .movie-stage::before {
+        inset: 0 -12px;
+    }
 }
 
 .header p {
@@ -54,6 +134,67 @@ body {
   display: flex;
   justify-content: center;
   margin: 20px 0;
+}
+
+.swipe-card {
+    background:
+        radial-gradient(circle at 50% 0%, #f379b938, transparent 48%),
+        linear-gradient(155deg, #4a203b, #29131f 68%);
+    border: 1px solid #f19dc558;
+    box-shadow:
+        inset 0 1px 0 #ffd6ea40,
+        0 16px 32px #10060d80,
+        0 0 24px #e76daf26;
+}
+
+.swipe-hints {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0 12px;
+    padding-inline: 6px;
+}
+
+.swipe-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 8px;
+    border: 1px solid #f19dc54d;
+    border-radius: 12px;
+    background: #f9b4d418;
+    color: #ffe0f0;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.swipe-hint span {
+    color: #ffa8d5;
+    font-size: 1.1rem;
+    line-height: 1;
+    text-shadow: 0 0 8px #ff81c7;
+}
+
+.swipe-hints::before,
+.swipe-hints::after {
+    content: "✦";
+    position: absolute;
+    color: #ffc6e5;
+    font-size: 0.7rem;
+    text-shadow: 0 0 8px #ff86cc;
+    pointer-events: none;
+}
+
+.swipe-hints::before {
+    top: -7px;
+    left: 0;
+}
+
+.swipe-hints::after {
+    right: 0;
+    bottom: -6px;
 }
 
 button {
@@ -199,6 +340,117 @@ button:disabled:hover {
 .card-menu-dropdown button {
   width: 100%;
   text-align: left;
+}
+
+/* Фон и свет вокруг приложения */
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse at 50% 0%, #7d315a80, transparent 38rem),
+        radial-gradient(ellipse at 100% 65%, #5b20495e, transparent 32rem),
+        #211019;
+}
+
+/* Заголовок приложения */
+
+
+.header p {
+    color: #ebc3d8;
+}
+
+/* Карточка фильма, экран конца подборки и оба списка */
+.movie-card,
+.movie-list {
+    background:
+        radial-gradient(ellipse at 50% 0%, #f07fb92b, transparent 70%),
+        linear-gradient(155deg, #48223a, #2b1625 75%);
+    border: 1px solid #f4a7cf50;
+    box-shadow:
+        inset 0 1px 0 #ffe0ef38,
+        0 12px 24px #10060d85,
+        0 0 24px #ef78ba20;
+}
+
+.movie-poster {
+    box-shadow:
+        0 8px 18px #11070ecc,
+        0 0 0 1px #ffd1e340;
+}
+
+.movie-stage .swipe-card h2 {
+    margin: 8px 0 4px;
+    font-size: 1.1rem;
+    line-height: 1.25;
+}
+
+.movie-stage .swipe-card p {
+    margin: 4px 0;
+    font-size: 0.875rem;
+    line-height: 1.35;
+}
+
+.movie-stage .swipe-hints {
+    gap: 6px;
+    margin: 30px 0 6px;
+    padding-inline: 0;
+}
+
+.movie-stage .swipe-hint {
+    margin-top: 0;
+    padding: 5px 6px;
+    font-size: 0.75rem;
+}
+
+.movie-stage .movie-actions {
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.movie-stage .movie-actions button {
+    padding: 8px 10px;
+    font-size: 0.875rem;
+    min-height: 36px;
+}
+
+.movie-stage .card-menu {
+    top: 8px;
+    right: 8px;
+}
+
+.movie-stage .card-menu-toggle {
+    width: 32px;
+    height: 32px;
+    font-size: 22px;
+}
+
+/* Кнопки и меню */
+.main button:not(:disabled) {
+    background: linear-gradient(180deg, #874060, #602b48);
+    border: 1px solid #ef9dc876;
+    color: #fff1f8;
+    box-shadow:
+        inset 0 1px 0 #ffd2e74a,
+        0 3px 0 #351528,
+        0 5px 12px #10060d70;
+    transition: background-color 160ms, box-shadow 160ms;
+}
+
+@media (hover: hover) {
+    .main button:not(:disabled):hover {
+        box-shadow:
+            inset 0 1px 0 #ffe3f399,
+            0 3px 0 #351528,
+            0 0 14px #ff83c16b;
+    }
+}
+
+.main button:focus-visible {
+    outline: 2px solid #ffc7e5;
+    outline-offset: 3px;
+}
+
+.main button:not(:disabled):active {
+    box-shadow: inset 0 2px 5px #2a0c20a0;
 }
 
 @media (max-width: 500px) {
