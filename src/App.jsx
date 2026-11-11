@@ -456,7 +456,7 @@ export default function App(){
     return (
     <>
         <header className = "header">
-            <h1>Movies</h1>
+            <h1>Movies from Alya</h1>
             <p>Выбери, что посмотреть в следущий раз</p>
         </header>
 
